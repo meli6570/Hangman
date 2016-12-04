@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang ="en">
+<head>
+	<meta charset="UTF-8">
+	<title> Hanging around the World</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-2.2.3.js" integrity="
+  sha256-laXWtGydpwqJ8JA+X9x2miwmaiKhn8tVmOVEigRNtP4=" crossorigin="anonymous"></script>
+  <style>
+  #letters {
+    display: flex;
+    flex-flow: row wrap;
+  }
+
+  .letter {
+    padding: 1em;
+    margin: 0.5em;
+    border: 1px solid #ccc;
+    cursor: pointer;
+  }
+
+  #dashes {
+    text-align: center;
+    font-size: 3em;
+  }
+
+  #jumbalaya {
+    background-image: url('https://img1.etsystatic.com/030/0/8116977/il_fullxfull.614501891_kdfg.jpg');
+    background-size: cover;
+    background-position: 0 -100px;
+  }
+
+  h1,p {
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 1);
+  }
+
+  #map {
+    max-height: 255px;
+  }
+
+  #flag {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-around;
+  }
+  </style>
+</head>
+<body>
+	<div id="jumbalaya" class="jumbotron", style="color: white;">
+		<h1 class="text-center", > Hanging Around the World </h1>
+		<div class="text-center">
+                <button id="playButton"class="btn btn-primary btn-lg"><h1><span class="glyphicon glyphicon-play"></span></h1></button>
+                <p>Press Play to start</p>
+            </div>
+        </div>
+<div class ="panel panel-default">
+	<div>
+    <h2 id="remaining"></h2>
+  </div>
+  <div id="dashes"></div>
+  <div id="flag">
+    <div>
+      <img id="map">
+    </div>
+  </div>
+  <div id="letters"></div>
+
+
+</div>
+	
+
+<script>
+  'use strict';
+
+
+  $('#playButton').click(() => reset())
+
+
+  const countries = [ 
+    {
+      name: 'Argentina',
+      flag: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Flag_of_Argentina.svg/2000px-Flag_of_Argentina.svg.png'
+    }, 
+    {
+      name: 'Colombia',
+      flag: 'http://www.mapsofworld.com/images/world-countries-flags/colombia-flag.gif'
+    }, 
+    {
+      name: 'India',
+      flag: 'http://www.mapsofindia.com/maps/india/india-flag-a4.jpg'
+    },
+  ]
+
+
+  let word
+  let guess
+  let letters
+  let guesses
+  let remaining
+  let completed
+  let won
+  let lost
+  let country
+
+
+  // user clicks start
+  function reset() {
+    word = selectCountry()
+    remaining = 10
+    letters = []
+    guesses = []
+    won = false
+    lost = false
+    completed = false
+
+      $('#map').attr('src', null)
+
+    // lookup here! http://www.theasciicode.com.ar/ascii-printable-characters/capital-letter-z-uppercase-ascii-code-90.html
+    for (let i = 0; i < 26; i++) {
+      letters.push(String.fromCharCode(65 + i))
+    }
+
+    drawLetters()
+    drawRemaining()
+    drawGuess()
+  }
+  
+  // select a country
+  function selectCountry() {
+    country = countries[Math.floor(Math.random() * countries.length)]
+    // $('#jumbalaya').css('background-image', `url(${country.flag}`)
+    
+    return country.name.toUpperCase()
+  }
+
+
+  // Iterate over letters and create dash spans
+  function drawGuess() {
+    const result = word.split('').reduce((prev, char, i) => {
+      prev += guesses.indexOf(char) !== -1? char : '-'
+      return prev
+    }, '')
+
+    $('#dashes').html(result)
+  }
+
+
+  function drawLetters() {
+    $('#letters').html('')
+
+    letters.forEach(letter => {
+      $('#letters').append($(`<div>${letter}</div>`)
+          .addClass('letter')
+          .click(() => {
+            console.log('Clicked', letter)
+            selectLetter(letter)
+          }))
+    })
+  }
+
+
+  function drawRemaining() {
+    $('#remaining').html(`${remaining} Guesses Remaining`)
+  }
+
+
+  function selectLetter(letter) {
+    if (completed) {
+      console.log('ignoring input while complete')
+      return
+    }
+
+
+    // Add the guess to the guesses array
+    guesses.push(letter)
+
+    // test if letter is in word
+    // if so, redraw word with letter active;
+    // if not, remove a guess and redraw hangman
+    if (word.indexOf(letter) === -1) {
+      remaining--
+    }
+
+    drawRemaining()
+    
+    // remove letter from letters array
+    const i = letters.indexOf(letter)
+    letters.splice(i, 1)
+
+    // redraw letters array
+    drawLetters()
+
+    drawGuess()
+
+
+    window.setTimeout(() => checkCompletion())
+  }
+
+
+  function checkCompletion() {
+    if (remaining <= 0) {
+      completed = true
+      lost = true
+      won = false
+    }
+
+    const guess = word.split('').reduce((prev, char, i) => {
+      prev += guesses.indexOf(char) !== -1? char : ''
+      return prev
+    }, '')
+
+    if (guess.length === word.length) {
+      completed = true
+      won = true
+      lost = false
+    }
+
+    // if complete, indicate
+    if (won) {
+      // alert('You win')
+      $('#map').attr('src', country.flag)
+      $('#letters').html('')
+      $('#remaining').html('YOU WIN!!')
+    }
+
+    if (lost) {
+      // alert('You lose')
+      $('#letters').html('')
+      $('#remaining').html('YOU LOSE :(')
+    }
+  }
+
+</script>
+</body>
+</html>
